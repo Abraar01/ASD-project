@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASD Detection System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --asd-alert: #ef233c;
+            --no-asd: #38b000;
+            --dark: #212529;
+            --light: #f8f9fa;
+            --text-muted: #6c757d;
+            --medium-risk: #ffaa00;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f8f9fa;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-family: 'Poppins', sans-serif;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1rem;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        button:hover {
+            background: #3a56d4;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(58, 86, 212, 0.3);
+        }
+
+        .result-card {
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 2rem;
+            text-align: center;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .asd-detected {
+            background: rgba(239, 35, 60, 0.05);
+            border-left: 5px solid var(--asd-alert);
+        }
+
+        .no-asd {
+            background: rgba(56, 176, 0, 0.05);
+            border-left: 5px solid var(--no-asd);
+        }
+
+        .medium-risk {
+            background: rgba(255, 170, 0, 0.05);
+            border-left: 5px solid var(--medium-risk);
+        }
+
+        .result-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .probability {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 1rem 0;
+        }
+
+        .confidence {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .high-confidence {
+            background: rgba(239, 35, 60, 0.1);
+            color: var(--asd-alert);
+        }
+
+        .medium-confidence {
+            background: rgba(255, 170, 0, 0.1);
+            color: var(--medium-risk);
+        }
+
+        .low-confidence {
+            background: rgba(56, 176, 0, 0.1);
+            color: var(--no-asd);
+        }
+
+        .feature-summary {
+            text-align: left;
+            margin-top: 1.5rem;
+            border-top: 1px solid #eee;
+            padding-top: 1.5rem;
+        }
+
+        .feature-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px dashed #eee;
+        }
+
+        .feature-name {
+            color: var(--text-muted);
+        }
+
+        .feature-value {
+            font-weight: 500;
+        }
+
+        .error-message {
+            color: var(--asd-alert);
+            background: rgba(239, 35, 60, 0.05);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            text-align: center;
+            border-left: 5px solid var(--asd-alert);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .form-card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ASD Screening Tool</h1>
+            <p>Complete this form to assess Autism Spectrum Disorder probability</p>
+        </div>
+
+        <div class="form-card">
+            {% if error %}
+                <div class="error-message">
+                    <strong>Error:</strong> {{ error }}
+                </div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('predict') }}">
+                <!-- Social Responsiveness Scale -->
+                <div class="form-group">
+                    <label for="Social_Responsiveness_Scale">Social Responsiveness Scale (0-100)</label>
+                    <input type="number" id="Social_Responsiveness_Scale" 
+                           name="Social_Responsiveness_Scale" 
+                           min="0" max="100" step="0.1" required
+                           value="{{ form_data.Social_Responsiveness_Scale if form_data }}">
+                </div>
+
+                <!-- Age -->
+                <div class="form-group">
+                    <label for="Age_Years">Age (Years)</label>
+                    <input type="number" id="Age_Years" name="Age_Years" 
+                           min="1" max="120" required
+                           value="{{ form_data.Age_Years if form_data }}">
+                </div>
+
+                <!-- Speech Delay/Language Disorder -->
+                <div class="form-group">
+                    <label for="Speech_Delay_Language_Disorder">Speech Delay/Language Disorder</label>
+                    <select id="Speech_Delay_Language_Disorder" name="Speech_Delay_Language_Disorder" required>
+                        <option value="" disabled {% if not form_data %}selected{% endif %}>Select option</option>
+                        <option value="0" {% if form_data and form_data['Speech_Delay_Language_Disorder'] == '0' %}selected{% endif %}>Not present</option>
+                        <option value="1" {% if form_data and form_data['Speech_Delay_Language_Disorder'] == '1' %}selected{% endif %}>Present</option>
+                    </select>
+                </div>
+
+                <!-- Learning disorder -->
+                <div class="form-group">
+                    <label for="Learning_disorder">Learning Disorder</label>
+                    <select id="Learning_disorder" name="Learning_disorder" required>
+                        <option value="" disabled {% if not form_data %}selected{% endif %}>Select option</option>
+                        <option value="0" {% if form_data and form_data.Learning_disorder == '0' %}selected{% endif %}>Not present</option>
+                        <option value="1" {% if form_data and form_data.Learning_disorder == '1' %}selected{% endif %}>Present</option>
+                    </select>
+                </div>
+
+                <!-- Genetic Disorders -->
+                <div class="form-group">
+                    <label for="Genetic_Disorders">Genetic Disorders</label>
+                    <select id="Genetic_Disorders" name="Genetic_Disorders" required>
+                        <option value="" disabled {% if not form_data %}selected{% endif %}>Select option</option>
+                        <option value="0" {% if form_data and form_data.Genetic_Disorders == '0' %}selected{% endif %}>Not present</option>
+                        <option value="1" {% if form_data and form_data.Genetic_Disorders == '1' %}selected{% endif %}>Present</option>
+                    </select>
+                </div>
+
+                <!-- Depression -->
+                <div class="form-group">
+                    <label for="Depression">Depression</label>
+                    <select id="Depression" name="Depression" required>
+                        <option value="" disabled {% if not form_data %}selected{% endif %}>Select option</option>
+                        <option value="0" {% if form_data and form_data.Depression == '0' %}selected{% endif %}>Not present</option>
+                        <option value="1" {% if form_data and form_data.Depression == '1' %}selected{% endif %}>Present</option>
+                    </select>
+                </div>
+
+                <!-- Global developmental delay -->
+                <div class="form-group">
+                    <label for="Global_developmental_delay_intellectual_disability">Global Developmental Delay</label>
+                    <select id="Global_developmental_delay_intellectual_disability" 
+                            name="Global_developmental_delay_intellectual_disability" required>
+                        <option value="" disabled {% if not form_data %}selected{% endif %}>Select option</option>
+                        <option value="0" {% if form_data and form_data.Global_developmental_delay_intellectual_disability == '0' %}selected{% endif %}>Not present</option>
+                        <option value="1" {% if form_data and form_data.Global_developmental_delay_intellectual_disability == '1' %}selected{% endif %}>Present</option>
+                    </select>
+                </div>
+
+                <!-- Social/Behavioral Issues -->
+                <div class="form-group">
+                    <label for="Social_Behavioural_Issues">Social/Behavioral Issues</label>
+                    <select id="Social_Behavioural_Issues" name="Social_Behavioural_Issues" required>
+                        <option value="" disabled {% if not form_data %}selected{% endif %}>Select option</option>
+                        <option value="0" {% if form_data and form_data.Social_Behavioural_Issues == '0' %}selected{% endif %}>Not present</option>
+                        <option value="1" {% if form_data and form_data.Social_Behavioural_Issues == '1' %}selected{% endif %}>Present</option>
+                    </select>
+                </div>
+
+                <!-- Anxiety disorder -->
+                <div class="form-group">
+                    <label for="Anxiety_disorder">Anxiety Disorder</label>
+                    <select id="Anxiety_disorder" name="Anxiety_disorder" required>
+                        <option value="" disabled {% if not form_data %}selected{% endif %}>Select option</option>
+                        <option value="0" {% if form_data and form_data.Anxiety_disorder == '0' %}selected{% endif %}>Not present</option>
+                        <option value="1" {% if form_data and form_data.Anxiety_disorder == '1' %}selected{% endif %}>Present</option>
+                    </select>
+                </div>
+
+                <!-- Sex -->
+                <div class="form-group">
+                    <label for="Sex">Gender</label>
+                    <select id="Sex" name="Sex" required>
+                        <option value="" disabled {% if not form_data %}selected{% endif %}>Select gender</option>
+                        <option value="0" {% if form_data and form_data.Sex == '0' %}selected{% endif %}>Female</option>
+                        <option value="1" {% if form_data and form_data.Sex == '1' %}selected{% endif %}>Male</option>
+                    </select>
+                </div>
+
+                <!-- Jaundice -->
+                <div class="form-group">
+                    <label for="Jaundice">History of Jaundice</label>
+                    <select id="Jaundice" name="Jaundice" required>
+                        <option value="" disabled {% if not form_data %}selected{% endif %}>Select option</option>
+                        <option value="0" {% if form_data and form_data.Jaundice == '0' %}selected{% endif %}>Not present</option>
+                        <option value="1" {% if form_data and form_data.Jaundice == '1' %}selected{% endif %}>Present</option>
+                    </select>
+                </div>
+
+                <!-- Family member with ASD -->
+                <div class="form-group">
+                    <label for="Family_member_with_ASD">Family Member with ASD</label>
+                    <select id="Family_member_with_ASD" name="Family_member_with_ASD" required>
+                        <option value="" disabled {% if not form_data %}selected{% endif %}>Select option</option>
+                        <option value="0" {% if form_data and form_data.Family_member_with_ASD == '0' %}selected{% endif %}>Not present</option>
+                        <option value="1" {% if form_data and form_data.Family_member_with_ASD == '1' %}selected{% endif %}>Present</option>
+                    </select>
+                </div>
+
+                <button type="submit">Evaluate ASD Probability</button>
+            </form>
+        </div>
+
+        {% if result %}
+        <div class="result-card 
+            {% if result.diagnosis == 'ASD Detected' %}asd-detected
+            {% elif result.confidence == 'medium' %}medium-risk
+            {% else %}no-asd{% endif %}">
+            
+            <h2 class="result-title">{{ result.diagnosis }}</h2>
+            
+            <div class="probability">
+                Probability: {{ result.probability }}%
+            </div>
+            
+            <div class="confidence 
+                {% if result.confidence == 'high' %}high-confidence
+                {% elif result.confidence == 'medium' %}medium-confidence
+                {% else %}low-confidence{% endif %}">
+                {{ result.confidence|upper }} CONFIDENCE
+            </div>
+            
+            <p>
+                {% if result.diagnosis == 'ASD Detected' %}
+                Screening suggests ASD traits. Consult a specialist for comprehensive evaluation.
+                {% else %}
+                Screening suggests typical development. Seek professional advice if concerns persist.
+                {% endif %}
+            </p>
+            
+            <div class="feature-summary">
+                <h3>Summary of Inputs:</h3>
+                {% for feature, value in result.features.items() %}
+                <div class="feature-item">
+                    <span class="feature-name">{{ feature.replace('_', ' ') }}</span>
+                    <span class="feature-value">
+                        {% if feature == 'Sex' %}
+                            {{ 'Male' if value == 1 else 'Female' }}
+                        {% else %}
+                            {{ 'Present' if value == 1 else 'Not present' }}
+                        {% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-muted);">
+                Evaluation performed on {{ result.timestamp }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
